@@ -48,6 +48,7 @@ type QemuConfig struct {
 	NetdevConfig   string
 	UUID           uuid.UUID
 	USB            bool
+	Param          string
 	Devices        []string
 }
 
@@ -186,6 +187,9 @@ func runQemu(args []string) {
 	usbEnabled := flags.Bool("usb", false, "Enable USB controller")
 	deviceFlags := multipleFlag{}
 	flags.Var(&deviceFlags, "device", "Add USB host device(s). Format driver[,prop=value][,...] -- add device, like -device on the qemu command line.")
+
+	//Param
+	params := flags.String("param", "", "extra params for qemu")
 
 	if err := flags.Parse(args); err != nil {
 		log.Fatal("Unable to parse args")
@@ -340,6 +344,7 @@ func runQemu(args []string) {
 		NetdevConfig:   netdevConfig,
 		UUID:           vmUUID,
 		USB:            *usbEnabled,
+		Param:          *params,
 		Devices:        deviceFlags,
 	}
 
@@ -674,6 +679,9 @@ func buildQemuCmdline(config QemuConfig) (QemuConfig, []string) {
 
 	if config.USB == true {
 		qemuArgs = append(qemuArgs, "-usb")
+	}
+	if len(config.Param) != 0 {
+		qemuArgs = append(qemuArgs, strings.Fields(config.Param)...)
 	}
 	for _, d := range config.Devices {
 		qemuArgs = append(qemuArgs, "-device", d)
